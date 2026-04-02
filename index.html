@@ -167,6 +167,43 @@
       transition: width 0.45s ease;
     }
 
+    #journey-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      padding: 12px 16px;
+      background: rgba(20, 13, 6, 0.96);
+      border-bottom: 1px solid #3f2c0e;
+    }
+
+    .stat-card {
+      border: 1px solid #4e3814;
+      border-radius: 10px;
+      background: rgba(40, 27, 10, 0.7);
+      padding: 10px 11px;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.11em;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      color: var(--gold);
+      font-size: 18px;
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+
+    .stat-sub {
+      color: var(--sand);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
     #info-panel {
       flex: 1;
       min-height: 0;
@@ -279,6 +316,11 @@
       color: white;
     }
 
+    #btn-back {
+      background: linear-gradient(135deg, #264b66, #3c7099);
+      color: white;
+    }
+
     #map {
       flex: 1;
       min-width: 0;
@@ -386,6 +428,19 @@
         <div id="progress-track"><div id="progress-fill"></div></div>
       </div>
 
+      <section id="journey-stats">
+        <div class="stat-card">
+          <div class="stat-label">Miles Traveled</div>
+          <div class="stat-value" id="stats-miles">0</div>
+          <div class="stat-sub" id="stats-miles-sub">Estimated total shown with voyage scaling.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Years Elapsed</div>
+          <div class="stat-value" id="stats-years">0.00</div>
+          <div class="stat-sub" id="stats-years-sub">Rounded to the nearest quarter-year.</div>
+        </div>
+      </section>
+
       <div id="info-panel">
         <div id="welcome">
           <div class="icon">🧭</div>
@@ -407,6 +462,7 @@
       <div id="controls">
         <button class="btn" id="btn-start">▶ Start</button>
         <button class="btn" id="btn-next" disabled>Next ▶</button>
+        <button class="btn" id="btn-back" disabled>◀ Back</button>
       </div>
     </aside>
 
@@ -696,11 +752,61 @@
       }
     ];
 
+    const routeAdjustments = {
+      "voyage-1": {
+        historicalMiles: 43000,
+        elapsedYears: [0, 0, 0.25, 0.5, 0.75, 1.25, 1.75, 2.0, 2.25, 3.0],
+        segments: [
+          [[43.8, -10.5], [36.5, -16.2]],
+          [[20.0, -25.0], [2.0, -29.0], [-15.0, -35.0]],
+          [[-35.0, -45.0], [-48.0, -58.0]],
+          [[-56.0, -80.0], [-58.0, -110.0], [-45.0, -140.0], [-27.0, -151.0]],
+          [[-24.0, -156.0], [-31.0, -166.0], [-37.0, 176.0], [-34.5, 177.5]],
+          [[-37.8, 177.0], [-42.5, 178.2], [-46.6, 174.0], [-46.5, 168.0], [-42.0, 166.0], [-38.5, 171.5], [-35.0, 174.5], [-37.0, 168.5], [-39.0, 163.0], [-38.0, 156.0], [-36.0, 151.8]],
+          [[-29.0, 153.0], [-22.5, 153.2], [-17.0, 146.5]],
+          [[-11.0, 143.0], [-9.5, 139.0], [-10.0, 132.0], [-9.0, 125.0], [-8.0, 118.0], [-7.0, 112.0]],
+          [[-13.0, 101.0], [-20.0, 92.0], [-27.0, 76.0], [-34.0, 40.0], [-34.0, 18.0], [-15.0, -5.0], [15.0, -15.0], [38.0, -10.0]]
+        ]
+      },
+      "voyage-2": {
+        historicalMiles: 62000,
+        elapsedYears: [0, 0.25, 0.5, 0.75, 1.25, 1.75, 1.75, 2.5, 3.0],
+        segments: [
+          [[35.0, -15.0], [5.0, -20.0], [-20.0, -5.0], [-34.0, 18.0]],
+          [[-45.0, 30.0], [-55.0, 38.0], [-63.0, 40.0]],
+          [[-63.0, 70.0], [-58.0, 110.0], [-52.0, 145.0], [-47.0, 160.0]],
+          [[-35.0, 177.0], [-25.0, -178.0], [-22.0, -175.0]],
+          [[-24.0, -165.0], [-25.0, -150.0], [-26.0, -130.0]],
+          [[-20.0, -118.0], [-15.0, -128.0], [-10.0, -136.0]],
+          [[-18.0, -120.0], [-30.0, -140.0], [-48.0, -165.0], [-57.0, -90.0], [-57.0, -65.0], [-55.0, -45.0]],
+          [[-40.0, -20.0], [-15.0, -5.0], [10.0, -15.0], [35.0, -8.0]]
+        ]
+      },
+      "voyage-3": {
+        historicalMiles: 37000,
+        elapsedYears: [0, 0.25, 0.5, 1.25, 1.5, 1.75, 2.0, 2.5],
+        segments: [
+          [[35.0, -15.0], [5.0, -20.0], [-20.0, -5.0], [-34.0, 18.0]],
+          [[-40.0, 35.0], [-45.0, 50.0], [-49.0, 63.0]],
+          [[-46.0, 90.0], [-43.0, 120.0], [-44.0, 150.0], [-43.0, 170.0], [-35.0, -170.0], [-25.0, -160.0], [-18.0, -152.0]],
+          [[-8.0, -155.0], [8.0, -157.0], [18.0, -158.0]],
+          [[30.0, -160.0], [40.0, -150.0], [48.0, -135.0]],
+          [[56.0, -150.0], [61.0, -162.0], [65.0, -168.0]],
+          [[55.0, -170.0], [40.0, -165.0], [28.0, -160.0], [20.0, -156.0]]
+        ]
+      }
+    };
+
     const tabWrap = document.getElementById("tabs");
     const btnStart = document.getElementById("btn-start");
     const btnNext = document.getElementById("btn-next");
+    const btnBack = document.getElementById("btn-back");
     const pointInfo = document.getElementById("point-info");
     const welcome = document.getElementById("welcome");
+    const statsMiles = document.getElementById("stats-miles");
+    const statsMilesSub = document.getElementById("stats-miles-sub");
+    const statsYears = document.getElementById("stats-years");
+    const statsYearsSub = document.getElementById("stats-years-sub");
 
     const map = L.map("map", {
       center: [8, -15],
@@ -728,6 +834,7 @@
     let selectedVoyageIndex = 0;
     let currentStep = -1;
     let animating = false;
+    let rewinding = false;
     let animationToken = 0;
 
     function normalizeLon(lon) {
@@ -748,6 +855,19 @@
       return `${Math.abs(lat).toFixed(1)}°${hemi}`;
     }
 
+    function roundQuarter(value) {
+      return Math.round(value * 4) / 4;
+    }
+
+    function haversineMiles(lat1, lon1, lat2, lon2) {
+      const R = 3958.8;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
     function buildContinuousRoute(points) {
       const route = [];
       let runningLon = points[0].lon;
@@ -758,7 +878,7 @@
           return;
         }
 
-        const candidates = [point.lon - 360, point.lon, point.lon + 360];
+        const candidates = [point.lon - 720, point.lon - 360, point.lon, point.lon + 360, point.lon + 720];
         let bestLon = candidates[0];
         let bestGap = Math.abs(candidates[0] - runningLon);
 
@@ -777,33 +897,128 @@
       return route;
     }
 
-    function buildSegmentWaypoints(start, end) {
-      const midLon = start.displayLon + (end.displayLon - start.displayLon) * 0.5;
-      const arcLift = Math.max(3, Math.min(14, Math.abs(end.displayLon - start.displayLon) / 10));
-      const direction = start.lat < end.lat ? 1 : -1;
-      const midLat = ((start.lat + end.lat) / 2) + arcLift * direction * 0.45;
+    function buildContinuousPolyline(coords, startingDisplayLon = null) {
+      const line = [];
+      let runningLon = startingDisplayLon ?? coords[0][1];
 
-      return [
-        [start.lat, start.displayLon],
-        [midLat, midLon],
-        [end.lat, end.displayLon]
-      ];
+      coords.forEach(([lat, lon], index) => {
+        if (index === 0) {
+          line.push([lat, runningLon]);
+          return;
+        }
+
+        const candidates = [lon - 720, lon - 360, lon, lon + 360, lon + 720];
+        let bestLon = candidates[0];
+        let bestGap = Math.abs(candidates[0] - runningLon);
+
+        candidates.forEach((candidate) => {
+          const gap = Math.abs(candidate - runningLon);
+          if (gap < bestGap) {
+            bestGap = gap;
+            bestLon = candidate;
+          }
+        });
+
+        runningLon = bestLon;
+        line.push([lat, runningLon]);
+      });
+
+      return line;
     }
 
     function currentVoyage() {
       return voyages[selectedVoyageIndex];
     }
 
+    function currentAdjustment() {
+      return routeAdjustments[currentVoyage().id];
+    }
+
     function currentRoute() {
       return buildContinuousRoute(currentVoyage().points);
     }
 
+    function buildSegmentPath(voyage, route, segmentIndex) {
+      const adjustment = routeAdjustments[voyage.id];
+      const rawPoints = [
+        [voyage.points[segmentIndex].lat, voyage.points[segmentIndex].lon],
+        ...(adjustment.segments[segmentIndex] || []),
+        [voyage.points[segmentIndex + 1].lat, voyage.points[segmentIndex + 1].lon]
+      ];
+
+      return buildContinuousPolyline(rawPoints, route[segmentIndex].displayLon);
+    }
+
+    const voyageComputed = Object.fromEntries(
+      voyages.map((voyage) => {
+        const route = buildContinuousRoute(voyage.points);
+        const cumulativeMiles = [0];
+
+        for (let i = 0; i < voyage.points.length - 1; i += 1) {
+          const segmentPath = buildSegmentPath(voyage, route, i);
+          let segmentMiles = 0;
+
+          for (let j = 1; j < segmentPath.length; j += 1) {
+            segmentMiles += haversineMiles(
+              segmentPath[j - 1][0],
+              segmentPath[j - 1][1],
+              segmentPath[j][0],
+              segmentPath[j][1]
+            );
+          }
+
+          cumulativeMiles.push(cumulativeMiles[i] + segmentMiles);
+        }
+
+        const historicalMiles = routeAdjustments[voyage.id].historicalMiles;
+        const scale = historicalMiles / cumulativeMiles[cumulativeMiles.length - 1];
+
+        return [voyage.id, {
+          route,
+          cumulativeMiles,
+          scale
+        }];
+      })
+    );
+
+    function currentComputed() {
+      return voyageComputed[currentVoyage().id];
+    }
+
+    function currentSegmentPath(segmentIndex) {
+      return buildSegmentPath(currentVoyage(), currentComputed().route, segmentIndex);
+    }
+
+    function currentMilesAt(index) {
+      const { cumulativeMiles, scale } = currentComputed();
+      return Math.round(cumulativeMiles[index] * scale);
+    }
+
+    function currentYearsAt(index) {
+      return currentAdjustment().elapsedYears[index];
+    }
+
     function updateVoyageSummary() {
       const voyage = currentVoyage();
+      const estimatedMiles = currentAdjustment().historicalMiles.toLocaleString();
+      const totalYears = currentAdjustment().elapsedYears[currentAdjustment().elapsedYears.length - 1].toFixed(2);
+
       document.getElementById("voyage-heading").textContent = voyage.title;
       document.getElementById("voyage-meta").textContent = `${voyage.years} • ${voyage.ship}`;
-      document.getElementById("voyage-blurb").textContent = voyage.intro;
+      document.getElementById("voyage-blurb").textContent = `${voyage.intro} Estimated full-voyage distance: about ${estimatedMiles} miles over roughly ${totalYears} years.`;
       document.getElementById("progress-fill").style.background = `linear-gradient(90deg, #8b6433, ${voyage.color})`;
+    }
+
+    function updateStats() {
+      const adjustment = currentAdjustment();
+      const totalMiles = adjustment.historicalMiles;
+      const totalYears = adjustment.elapsedYears[adjustment.elapsedYears.length - 1];
+      const shownIndex = currentStep < 0 ? 0 : currentStep;
+
+      statsMiles.textContent = currentMilesAt(shownIndex).toLocaleString();
+      statsMilesSub.textContent = `of ~${totalMiles.toLocaleString()} estimated miles on ${currentVoyage().name}`;
+      statsYears.textContent = currentYearsAt(shownIndex).toFixed(2);
+      statsYearsSub.textContent = `of ${totalYears.toFixed(2)} years total, rounded to nearest 0.25`;
     }
 
     function popupHtml(point, index, totalStops) {
@@ -828,21 +1043,35 @@
         layerState.activeLine = null;
       }
 
-      layerState.completedLines.forEach((line) => map.removeLayer(line));
+      layerState.completedLines.forEach(({ line }) => map.removeLayer(line));
       layerState.markers.forEach((marker) => map.removeLayer(marker));
       layerState.completedLines = [];
       layerState.markers = [];
       layerState.markerLookup = [];
     }
 
+    function setControlState() {
+      const route = currentComputed().route;
+      const complete = currentStep >= route.length - 1;
+
+      btnStart.disabled = animating || (currentStep >= 0 && !complete);
+      btnStart.textContent = complete ? "↺ Replay" : "▶ Start";
+
+      btnNext.disabled = animating || currentStep < 0 || complete;
+      btnNext.textContent = animating && !rewinding ? "Sailing..." : complete ? "Complete" : "Next ▶";
+
+      btnBack.disabled = animating || currentStep < 0;
+      btnBack.textContent = animating && rewinding ? "Rewinding..." : "◀ Back";
+    }
+
     function resetSidebar(copyOnly = false) {
       currentStep = -1;
       animating = false;
-      btnStart.disabled = false;
-      btnNext.disabled = true;
-      btnNext.textContent = "Next ▶";
+      rewinding = false;
       document.getElementById("progress-fill").style.width = "0%";
       document.getElementById("step-counter").textContent = `Press Start to begin ${currentVoyage().name.toLowerCase()}.`;
+      updateStats();
+      setControlState();
 
       if (!copyOnly) {
         welcome.style.display = "flex";
@@ -853,12 +1082,14 @@
     function showPointInfo(point, index, totalPoints) {
       welcome.style.display = "none";
       pointInfo.style.display = "block";
+      const years = currentYearsAt(index).toFixed(2);
+      const miles = currentMilesAt(index).toLocaleString();
       document.getElementById("point-number").textContent =
         point.number === "Departure"
-          ? "Departure"
+          ? `Departure • ${years} years • ${miles} miles`
           : point.number === "Final"
-            ? `Final stop • ${currentVoyage().years}`
-            : `Stop ${index} of ${totalPoints - 2}`;
+            ? `Final stop • ${years} years • ${miles} miles`
+            : `Stop ${index} of ${totalPoints - 2} • ${years} years • ${miles} miles`;
       document.getElementById("point-title").textContent = point.title;
       document.getElementById("point-sub").textContent = point.sub;
       document.getElementById("point-desc").textContent = point.desc;
@@ -876,10 +1107,13 @@
       } else if (currentStep === 0) {
         document.getElementById("step-counter").textContent = `Departure revealed • ${totalSegments} legs to sail`;
       } else if (currentStep === totalPoints - 1) {
-        document.getElementById("step-counter").textContent = `${currentVoyage().name} complete`;
+        document.getElementById("step-counter").textContent = `${currentVoyage().name} complete — ${currentYearsAt(currentStep).toFixed(2)} years, ~${currentMilesAt(currentStep).toLocaleString()} miles`;
       } else {
         document.getElementById("step-counter").textContent = `Leg ${currentStep} of ${totalSegments} complete`;
       }
+
+      updateStats();
+      setControlState();
     }
 
     function setMarkerStyle(marker, point, active = false) {
@@ -894,7 +1128,7 @@
     }
 
     function buildMarkers() {
-      const route = currentRoute();
+      const route = currentComputed().route;
       const totalStops = route.length - 2;
 
       route.forEach((point, index) => {
@@ -920,9 +1154,10 @@
       });
     }
 
-    function interpolatePoints(pts, targetFrames = 72) {
+    function interpolatePoints(pts, targetFrames = 84) {
       const distances = [0];
-      for (let i = 1; i < pts.length; i++) {
+
+      for (let i = 1; i < pts.length; i += 1) {
         const dy = pts[i][0] - pts[i - 1][0];
         const dx = pts[i][1] - pts[i - 1][1];
         distances.push(distances[i - 1] + Math.sqrt(dx * dx + dy * dy));
@@ -931,10 +1166,10 @@
       const total = distances[distances.length - 1];
       const interpolated = [pts[0]];
 
-      for (let step = 1; step < targetFrames - 1; step++) {
+      for (let step = 1; step < targetFrames - 1; step += 1) {
         const targetDistance = (step / (targetFrames - 1)) * total;
         let cursor = 1;
-        while (cursor < distances.length - 1 && distances[cursor] < targetDistance) cursor++;
+        while (cursor < distances.length - 1 && distances[cursor] < targetDistance) cursor += 1;
         const span = distances[cursor] - distances[cursor - 1] || 1;
         const t = (targetDistance - distances[cursor - 1]) / span;
         interpolated.push([
@@ -949,7 +1184,7 @@
 
     function animateSegment(segmentPoints, onComplete) {
       const token = ++animationToken;
-      const frames = interpolatePoints(segmentPoints, 76);
+      const frames = interpolatePoints(segmentPoints, 90);
 
       if (layerState.activeLine) {
         map.removeLayer(layerState.activeLine);
@@ -981,11 +1216,50 @@
 
         if (frameIndex >= frames.length) {
           clearInterval(timer);
-          layerState.completedLines.push(layerState.activeLine);
+          layerState.completedLines.push({ line: layerState.activeLine, frames });
           layerState.activeLine = null;
           onComplete();
         }
       }, 18);
+    }
+
+    function animateRewind(segmentData, onComplete) {
+      const token = ++animationToken;
+      const frames = segmentData.frames;
+
+      if (layerState.activeLine) {
+        map.removeLayer(layerState.activeLine);
+      }
+
+      map.removeLayer(segmentData.line);
+
+      layerState.activeLine = L.polyline(frames, {
+        color: currentVoyage().color,
+        weight: 4,
+        opacity: 0.95,
+        lineCap: "round",
+        lineJoin: "round"
+      }).addTo(map);
+
+      let frameIndex = frames.length - 1;
+      const timer = setInterval(() => {
+        if (token !== animationToken) {
+          clearInterval(timer);
+          return;
+        }
+
+        frameIndex -= 1;
+        const visible = frames.slice(0, Math.max(frameIndex, 1));
+        layerState.activeLine.setLatLngs(visible);
+        map.panTo(visible[visible.length - 1], { animate: true, duration: 0.08 });
+
+        if (frameIndex <= 1) {
+          clearInterval(timer);
+          map.removeLayer(layerState.activeLine);
+          layerState.activeLine = null;
+          onComplete();
+        }
+      }, 14);
     }
 
     function highlightThrough(step) {
@@ -994,44 +1268,75 @@
       });
     }
 
-    function advance() {
+    function startSelectedVoyage() {
       if (animating) return;
-
-      const route = currentRoute();
-
-      if (currentStep === -1) {
-        currentStep = 0;
-        highlightThrough(currentStep);
-        showPointInfo(route[currentStep], currentStep, route.length);
-        updateProgress();
-        flyToPoint(route[currentStep], 4);
-        btnStart.disabled = true;
-        btnNext.disabled = false;
-        return;
+      if (currentStep >= currentComputed().route.length - 1) {
+        prepareVoyage(selectedVoyageIndex, true);
       }
 
+      if (currentStep !== -1) return;
+
+      const route = currentComputed().route;
+      currentStep = 0;
+      highlightThrough(currentStep);
+      showPointInfo(route[currentStep], currentStep, route.length);
+      updateProgress();
+      flyToPoint(route[currentStep], 4);
+    }
+
+    function advance() {
+      if (animating || currentStep < 0) return;
+
+      const route = currentComputed().route;
       const segmentIndex = currentStep;
       if (segmentIndex >= route.length - 1) return;
 
       animating = true;
-      btnNext.disabled = true;
-      btnNext.textContent = "Sailing...";
+      rewinding = false;
+      setControlState();
 
-      animateSegment(buildSegmentWaypoints(route[segmentIndex], route[segmentIndex + 1]), () => {
+      animateSegment(currentSegmentPath(segmentIndex), () => {
         currentStep += 1;
         highlightThrough(currentStep);
         showPointInfo(route[currentStep], currentStep, route.length);
+        animating = false;
+        rewinding = false;
         updateProgress();
         flyToPoint(route[currentStep], currentStep === route.length - 1 ? 4 : 3.6);
+      });
+    }
 
+    function goBack() {
+      if (animating || currentStep < 0) return;
+
+      const route = currentComputed().route;
+
+      if (currentStep === 0) {
+        currentStep = -1;
+        highlightThrough(currentStep);
+        welcome.style.display = "flex";
+        pointInfo.style.display = "none";
+        updateProgress();
+        const { camera } = currentVoyage();
+        map.flyTo([camera.lat, camera.lon], camera.zoom, { duration: 1.0 });
+        return;
+      }
+
+      const lastSegment = layerState.completedLines.pop();
+      if (!lastSegment) return;
+
+      animating = true;
+      rewinding = true;
+      setControlState();
+
+      animateRewind(lastSegment, () => {
+        currentStep -= 1;
+        highlightThrough(currentStep);
+        showPointInfo(route[currentStep], currentStep, route.length);
         animating = false;
-        if (currentStep >= route.length - 1) {
-          btnNext.textContent = "Complete";
-          btnNext.disabled = true;
-        } else {
-          btnNext.textContent = "Next ▶";
-          btnNext.disabled = false;
-        }
+        rewinding = false;
+        updateProgress();
+        flyToPoint(route[currentStep], currentStep === 0 ? 4 : 3.6);
       });
     }
 
@@ -1063,10 +1368,11 @@
       });
     }
 
-    function switchVoyage(index) {
-      if (index === selectedVoyageIndex && layerState.markers.length) return;
+    function prepareVoyage(index, preserveSelection = false) {
+      if (!preserveSelection) {
+        selectedVoyageIndex = index;
+      }
 
-      selectedVoyageIndex = index;
       animationToken += 1;
       clearMapLayers();
       updateVoyageSummary();
@@ -1078,8 +1384,14 @@
       map.setView([camera.lat, camera.lon], camera.zoom, { animate: false });
     }
 
-    btnStart.addEventListener("click", advance);
+    function switchVoyage(index) {
+      selectedVoyageIndex = index;
+      prepareVoyage(index, true);
+    }
+
+    btnStart.addEventListener("click", startSelectedVoyage);
     btnNext.addEventListener("click", advance);
+    btnBack.addEventListener("click", goBack);
 
     drawLegend();
     switchVoyage(0);
