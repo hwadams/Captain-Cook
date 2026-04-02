@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Captain Cook's Voyages</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #120d07;
+      --panel: #181108;
+      --panel-2: #211608;
+      --panel-3: #2a1b0a;
+      --edge: #5e4315;
+      --gold: #f2cd63;
+      --sand: #d7be7c;
+      --muted: #a98f56;
+      --text: #f4e8c2;
+      --route: #f4efe1;
+      --voyage-1: #d7a83d;
+      --voyage-2: #60b8d6;
+      --voyage-3: #d86b4c;
+      --active: #fff4d2;
+    }
+
+    body {
+      font-family: Georgia, serif;
+      background: radial-gradient(circle at top, #2c1d0b 0%, var(--bg) 55%);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      padding: 12px 22px;
+      background: linear-gradient(135deg, rgba(84, 57, 14, 0.95), rgba(33, 22, 8, 0.98));
+      border-bottom: 2px solid #8a6421;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+      z-index: 2;
+    }
+
+    header h1 {
+      font-size: 20px;
+      letter-spacing: 0.04em;
+      color: var(--gold);
+    }
+
+    header p {
+      font-size: 11px;
+      color: var(--sand);
+      margin-top: 2px;
+    }
+
+    #main {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    #sidebar {
+      width: 360px;
+      background: linear-gradient(180deg, rgba(20, 13, 6, 0.97), rgba(12, 8, 3, 0.98));
+      border-right: 2px solid var(--edge);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      z-index: 1;
+    }
+
+    #tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid #3f2c0e;
+      background: rgba(36, 24, 9, 0.85);
+    }
+
+    .tab-btn {
+      border: 1px solid #6d4c16;
+      background: linear-gradient(180deg, #2d1d0a, #1c1206);
+      color: var(--sand);
+      border-radius: 999px;
+      padding: 9px 10px;
+      font: inherit;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+    }
+
+    .tab-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      border-color: #9e7631;
+    }
+
+    .tab-btn.active {
+      color: #161005;
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--gold), #f6e4a5);
+      box-shadow: 0 0 18px rgba(242, 205, 99, 0.22);
+    }
+
+    #voyage-summary {
+      padding: 14px 16px;
+      background: rgba(28, 18, 7, 0.85);
+      border-bottom: 1px solid #3f2c0e;
+    }
+
+    #voyage-kicker {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 6px;
+    }
+
+    #voyage-heading {
+      color: var(--gold);
+      font-size: 17px;
+      line-height: 1.25;
+      margin-bottom: 5px;
+    }
+
+    #voyage-meta, #voyage-blurb {
+      font-size: 12px;
+      line-height: 1.55;
+      color: var(--sand);
+    }
+
+    #voyage-meta { margin-bottom: 8px; }
+
+    #progress-bar-wrap {
+      padding: 12px 16px;
+      background: rgba(24, 16, 6, 0.96);
+      border-bottom: 1px solid #3f2c0e;
+    }
+
+    #progress-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    #progress-track {
+      height: 7px;
+      border-radius: 999px;
+      background: #3a2710;
+      overflow: hidden;
+    }
+
+    #progress-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #8b6433, var(--gold));
+      transition: width 0.45s ease;
+    }
+
+    #info-panel {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    #info-panel::-webkit-scrollbar { width: 6px; }
+    #info-panel::-webkit-scrollbar-thumb { background: #4d3511; border-radius: 999px; }
+    #info-panel::-webkit-scrollbar-track { background: transparent; }
+
+    #welcome {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+      align-items: center;
+      padding: 10px 6px 0;
+    }
+
+    #welcome .icon {
+      font-size: 40px;
+    }
+
+    #welcome h2,
+    #point-title {
+      color: var(--gold);
+      font-size: 18px;
+      line-height: 1.25;
+    }
+
+    #welcome p,
+    #point-desc {
+      color: var(--sand);
+      font-size: 12.5px;
+      line-height: 1.68;
+    }
+
+    #point-info {
+      display: none;
+    }
+
+    #point-number {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 6px;
+    }
+
+    #point-sub {
+      font-size: 11px;
+      color: var(--muted);
+      font-style: italic;
+      margin: 5px 0 10px;
+    }
+
+    #point-divider {
+      border: none;
+      border-top: 1px solid #403012;
+      margin-bottom: 11px;
+    }
+
+    #step-counter {
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      padding: 0 16px 10px;
+      background: rgba(24, 16, 6, 0.96);
+    }
+
+    #controls {
+      display: flex;
+      gap: 8px;
+      padding: 12px 14px 16px;
+      background: rgba(24, 16, 6, 0.98);
+      border-top: 1px solid #3f2c0e;
+    }
+
+    .btn {
+      flex: 1;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 8px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: filter 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #btn-start {
+      background: linear-gradient(135deg, var(--gold), #f6e4a5);
+      color: #1b1205;
+    }
+
+    #btn-next {
+      background: linear-gradient(135deg, #7a2616, #bf5c40);
+      color: white;
+    }
+
+    #map {
+      flex: 1;
+      min-width: 0;
+      position: relative;
+    }
+
+    .leaflet-popup-content-wrapper {
+      background: rgba(24, 15, 5, 0.96);
+      border: 1px solid #8a6421;
+      color: var(--text);
+      border-radius: 8px;
+    }
+
+    .leaflet-popup-tip { background: #8a6421; }
+    .leaflet-popup-content { margin: 12px 14px; }
+    .popup-title { color: var(--gold); font-size: 13px; font-weight: bold; margin-bottom: 4px; }
+    .popup-sub { color: var(--sand); font-size: 11px; margin-bottom: 6px; }
+    .popup-coords { color: var(--muted); font-size: 10px; font-family: monospace; margin-top: 6px; }
+
+    .leaflet-control-zoom a {
+      background: #2c1d0a !important;
+      color: var(--gold) !important;
+      border-color: #8a6421 !important;
+    }
+
+    .leaflet-control-zoom a:hover {
+      background: #4c3210 !important;
+    }
+
+    .legend {
+      background: rgba(18, 12, 5, 0.94);
+      color: var(--text);
+      border: 1px solid #8a6421;
+      border-radius: 8px;
+      padding: 12px 14px;
+      min-width: 180px;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.24);
+    }
+
+    .legend h4 {
+      color: var(--gold);
+      font-size: 12px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #3d2b0d;
+      padding-bottom: 4px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      margin-bottom: 6px;
+      color: var(--sand);
+    }
+
+    .legend-swatch,
+    .legend-dot {
+      flex-shrink: 0;
+    }
+
+    .legend-swatch {
+      width: 24px;
+      height: 4px;
+      border-radius: 999px;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.55);
+    }
+
+    @media (max-width: 900px) {
+      body { height: auto; min-height: 100vh; overflow: auto; }
+      #main { flex-direction: column; min-height: 0; }
+      #sidebar { width: 100%; border-right: none; border-bottom: 2px solid var(--edge); }
+      #map { height: 58vh; min-height: 420px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="font-size:26px;">⚓</div>
+    <div>
+      <h1>Captain Cook's Three Voyages, 1768-1779</h1>
+      <p>Animated Mercator map with voyage tabs, separate route colors, and smooth dateline panning.</p>
+    </div>
+  </header>
+
+  <div id="main">
+    <aside id="sidebar">
+      <div id="tabs"></div>
+
+      <section id="voyage-summary">
+        <div id="voyage-kicker">Selected Voyage</div>
+        <div id="voyage-heading"></div>
+        <div id="voyage-meta"></div>
+        <div id="voyage-blurb"></div>
+      </section>
+
+      <div id="progress-bar-wrap">
+        <div id="progress-label">Voyage Progress</div>
+        <div id="progress-track"><div id="progress-fill"></div></div>
+      </div>
+
+      <div id="info-panel">
+        <div id="welcome">
+          <div class="icon">🧭</div>
+          <h2>Captain Cook's Voyages</h2>
+          <p>Select a voyage, press <strong>Start</strong>, then advance stop by stop. The map is allowed to drift into an adjacent world copy so Pacific crossings stay continuous instead of snapping across the page.</p>
+        </div>
+
+        <div id="point-info">
+          <div id="point-number"></div>
+          <div id="point-title"></div>
+          <div id="point-sub"></div>
+          <hr id="point-divider"/>
+          <div id="point-desc"></div>
+        </div>
+      </div>
+
+      <div id="step-counter">Press Start to begin voyage 1.</div>
+
+      <div id="controls">
+        <button class="btn" id="btn-start">▶ Start</button>
+        <button class="btn" id="btn-next" disabled>Next ▶</button>
+      </div>
+    </aside>
+
+    <div id="map"></div>
+  </div>
+
+  <script>
+    const voyages = [
+      {
+        id: "voyage-1",
+        name: "Voyage 1",
+        title: "First Voyage aboard HMS Endeavour",
+        years: "1768-1771",
+        ship: "Plymouth to Tahiti, New Zealand, Australia, Java, and home",
+        color: "#d7a83d",
+        intro: "Cook left England to observe the Transit of Venus at Tahiti and then search the South Pacific. The voyage produced the first detailed British charts of New Zealand and Australia's eastern coast.",
+        camera: { lat: 8, lon: -15, zoom: 2 },
+        points: [
+          {
+            number: "Departure",
+            title: "Plymouth",
+            sub: "25 August 1768 · England",
+            desc: "Cook sailed from Plymouth in HMS Endeavour with astronomers, artists, and naturalists aboard. Officially they were bound for Tahiti to observe the Transit of Venus; secretly Cook also carried orders to look for a southern continent after the scientific work was done.",
+            lat: 50.3755,
+            lon: -4.1427,
+            type: "departure"
+          },
+          {
+            number: "1",
+            title: "Madeira",
+            sub: "September 1768 · Atlantic reprovisioning stop",
+            desc: "At Madeira the voyage took on wine, fresh produce, and supplies while Cook settled the ship into its long ocean routine. It was the first practical staging point on the run south into the Atlantic.",
+            lat: 32.7607,
+            lon: -16.9595,
+            type: "landing"
+          },
+          {
+            number: "2",
+            title: "Rio de Janeiro",
+            sub: "November-December 1768 · Brazil",
+            desc: "Cook stayed under suspicion from Portuguese officials, who were wary of foreign naval visitors in Rio. Even so, the stop refreshed the crew before the dangerous passage into the far south.",
+            lat: -22.9068,
+            lon: -43.1729,
+            type: "landing"
+          },
+          {
+            number: "3",
+            title: "Tierra del Fuego",
+            sub: "January 1769 · Cape Horn staging point",
+            desc: "The Endeavour paused near Tierra del Fuego before forcing its way around the Horn. The weather here was brutal, and the passage reminded everyone that this was still an age of wooden ships crossing the world's hardest seas.",
+            lat: -54.8019,
+            lon: -68.3030,
+            type: "landing"
+          },
+          {
+            number: "4",
+            title: "Tahiti",
+            sub: "April-July 1769 · Transit of Venus observation",
+            desc: "Tahiti was the scientific heart of the first voyage. Cook's party built Fort Venus, observed the Transit on 3 June 1769, and then prepared to continue west with the Tahitian navigator Tupaia joining the expedition.",
+            lat: -17.5334,
+            lon: -149.5667,
+            type: "landing"
+          },
+          {
+            number: "5",
+            title: "New Zealand",
+            sub: "October 1769-March 1770 · Circumnavigation and charting",
+            desc: "Cook circumnavigated both main islands and proved New Zealand was not part of a vast southern continent. Tupaia's language skills helped create crucial links with Maori communities despite several violent early encounters.",
+            lat: -35.2620,
+            lon: 174.1220,
+            type: "landing"
+          },
+          {
+            number: "6",
+            title: "Botany Bay",
+            sub: "April 1770 · First landing on Australia's east coast",
+            desc: "Cook's landing at Botany Bay marked the first sustained European survey of Australia's eastern shoreline. Joseph Banks and Daniel Solander were astonished by the richness of the plant life they found there.",
+            lat: -34.0005,
+            lon: 151.2310,
+            type: "landing"
+          },
+          {
+            number: "7",
+            title: "Endeavour River",
+            sub: "June-August 1770 · Great Barrier Reef repairs",
+            desc: "After the ship struck the Great Barrier Reef, Cook beached the damaged Endeavour at the Endeavour River for repairs. The crew survived only because of disciplined seamanship and weeks of labor in a remote anchorage.",
+            lat: -15.4656,
+            lon: 145.2496,
+            type: "landing"
+          },
+          {
+            number: "8",
+            title: "Batavia",
+            sub: "October-December 1770 · Java",
+            desc: "Batavia repaired the ship, but it also exposed the crew to malaria and dysentery. More men were lost here and on the homeward run than in the storms and reef crisis that had nearly wrecked the expedition.",
+            lat: -6.2088,
+            lon: 106.8456,
+            type: "landing"
+          },
+          {
+            number: "Final",
+            title: "Return to England",
+            sub: "13 July 1771 · Deal, England",
+            desc: "The first voyage ended with Cook returning home as one of Britain's leading navigators. He had charted New Zealand and the east coast of Australia with remarkable accuracy and immediately became central to Admiralty planning for another Pacific expedition.",
+            lat: 51.2234,
+            lon: 1.4026,
+            type: "final"
+          }
+        ]
+      },
+      {
+        id: "voyage-2",
+        name: "Voyage 2",
+        title: "Second Voyage aboard HMS Resolution",
+        years: "1772-1775",
+        ship: "A global hunt for the southern continent through the Antarctic seas",
+        color: "#60b8d6",
+        intro: "Cook's second voyage was designed to settle the Terra Australis question. He crossed the Antarctic Circle repeatedly, roamed farther south than any navigator before him, and disproved the idea of a temperate southern supercontinent.",
+        camera: { lat: -12, lon: -10, zoom: 2 },
+        points: [
+          {
+            number: "Departure",
+            title: "Plymouth",
+            sub: "13 July 1772 · England",
+            desc: "Cook sailed again from Plymouth, this time in Resolution, with chronometers and a mission focused on the southern oceans. The expedition was less about one destination and more about proving where a great southern continent was not.",
+            lat: 50.3755,
+            lon: -4.1427,
+            type: "departure"
+          },
+          {
+            number: "1",
+            title: "Cape of Good Hope",
+            sub: "October-November 1772 · South Africa",
+            desc: "The Cape was the final major provisioning stop before the plunge into the Southern Ocean. From there Cook turned south and began the hardest ice navigation of his career.",
+            lat: -33.9249,
+            lon: 18.4241,
+            type: "landing"
+          },
+          {
+            number: "2",
+            title: "First Crossing of the Antarctic Circle",
+            sub: "17 January 1773 · Southern Ocean",
+            desc: "Cook became the first recorded navigator to cross the Antarctic Circle. Ice and fog still blocked access to the continent itself, but the barrier of the far south had been breached.",
+            lat: -66.57,
+            lon: 39.0,
+            type: "landing"
+          },
+          {
+            number: "3",
+            title: "Dusky Sound",
+            sub: "March-April 1773 · New Zealand",
+            desc: "Resolution refitted in the deep shelter of Dusky Sound after the Antarctic ordeal. The stop mixed repair work, scientific collecting, and Cook's practical attempts to keep the crew healthy.",
+            lat: -45.7333,
+            lon: 166.50,
+            type: "landing"
+          },
+          {
+            number: "4",
+            title: "Tonga",
+            sub: "October 1773 · Friendly Islands",
+            desc: "Cook's visit to Tonga reinforced his admiration for Polynesian seamanship and social organization. The island group also became one of his key waypoints between long Pacific traverses.",
+            lat: -21.1394,
+            lon: -175.2018,
+            type: "landing"
+          },
+          {
+            number: "5",
+            title: "Easter Island",
+            sub: "March 1774 · Rapa Nui",
+            desc: "Cook found the giant moai and a society living amid traces of a much larger earlier population. His party made one of the first systematic European descriptions of the island's monuments.",
+            lat: -27.1127,
+            lon: -109.3497,
+            type: "landing"
+          },
+          {
+            number: "6",
+            title: "The Marquesas",
+            sub: "April 1774 · Nuku Hiva",
+            desc: "The Marquesas stop highlighted another branch of the Polynesian world. Published accounts from Cook's voyage helped carry the word 'tattoo' into English from Polynesian languages.",
+            lat: -8.9108,
+            lon: -140.0997,
+            type: "landing"
+          },
+          {
+            number: "7",
+            title: "South Georgia",
+            sub: "January 1775 · Southern Atlantic",
+            desc: "Cook charted South Georgia in miserable weather and proved it was no continent. The voyage was steadily shrinking the blank spaces of the southern oceans into mapped islands and ice.",
+            lat: -54.2806,
+            lon: -36.5078,
+            type: "landing"
+          },
+          {
+            number: "Final",
+            title: "Return to England",
+            sub: "30 July 1775 · Spithead",
+            desc: "Cook returned to Britain having effectively demolished the old myth of a fertile southern continent in navigable latitudes. He was now the preeminent long-distance navigator of his age.",
+            lat: 50.7955,
+            lon: -1.1080,
+            type: "final"
+          }
+        ]
+      },
+      {
+        id: "voyage-3",
+        name: "Voyage 3",
+        title: "Third Voyage, North Pacific and Hawaii",
+        years: "1776-1779",
+        ship: "From Britain through the southern oceans to Hawaii and the Northwest Coast",
+        color: "#d86b4c",
+        intro: "The third voyage aimed to approach the Northwest Passage from the Pacific side. It led Cook to the Hawaiian Islands, the northwest coast of North America, and finally back to Hawaii, where he was killed at Kealakekua Bay.",
+        camera: { lat: -4, lon: 25, zoom: 2 },
+        points: [
+          {
+            number: "Departure",
+            title: "Plymouth",
+            sub: "12 July 1776 · England",
+            desc: "Cook's last voyage began with orders to carry Omai home to the Pacific and then turn north in search of a navigable route between the Pacific and Atlantic. The scale of the mission was once again global.",
+            lat: 50.3755,
+            lon: -4.1427,
+            type: "departure"
+          },
+          {
+            number: "1",
+            title: "Cape Town",
+            sub: "October 1776 · Cape of Good Hope",
+            desc: "At Cape Town Cook gathered supplies and intelligence before heading east. The stop set up a long swing through the southern Indian Ocean rather than a direct push into the Pacific.",
+            lat: -33.9249,
+            lon: 18.4241,
+            type: "landing"
+          },
+          {
+            number: "2",
+            title: "Kerguelen",
+            sub: "December 1776 · Desolation Islands",
+            desc: "Cook visited the storm-lashed Kerguelen Islands and confirmed they were barren subantarctic islands, not the edge of a rich southern continent. He renamed them the Desolation Islands with dry precision.",
+            lat: -49.3500,
+            lon: 70.2167,
+            type: "landing"
+          },
+          {
+            number: "3",
+            title: "Tahiti",
+            sub: "August-September 1777 · Society Islands",
+            desc: "The voyage paused in Tahiti while Omai's return reshaped local and imperial expectations alike. Tahiti also remained one of Cook's most important Pacific crossroads for replenishment and diplomacy.",
+            lat: -17.6509,
+            lon: -149.4260,
+            type: "landing"
+          },
+          {
+            number: "4",
+            title: "Hawaii",
+            sub: "January 1778 · Kauai",
+            desc: "Cook became the first European known to make contact with the Hawaiian Islands. He quickly recognized that Hawaiian language and culture were deeply connected to the wider Polynesian world.",
+            lat: 21.9790,
+            lon: -159.3711,
+            type: "landing"
+          },
+          {
+            number: "5",
+            title: "Nootka Sound",
+            sub: "March-April 1778 · Vancouver Island",
+            desc: "At Nootka Sound Cook repaired his ships and traded with Nuu-chah-nulth communities. The exchange of sea otter pelts here helped foreshadow the maritime fur trade that followed in the region.",
+            lat: 49.5951,
+            lon: -126.6188,
+            type: "landing"
+          },
+          {
+            number: "6",
+            title: "Bering Strait",
+            sub: "August 1778 · Arctic approach",
+            desc: "Cook drove north through the Bering Strait but met impenetrable ice. The long-sought Northwest Passage remained closed, and the expedition had to turn back south before winter locked the coast.",
+            lat: 66.0,
+            lon: -169.0,
+            type: "landing"
+          },
+          {
+            number: "Final",
+            title: "Kealakekua Bay",
+            sub: "14 February 1779 · Hawaii Island",
+            desc: "Cook returned to Hawaii for repairs and provisions, but relations deteriorated sharply after a cutter was stolen. In the confrontation that followed at Kealakekua Bay, Cook was killed on the shore, ending one of the most consequential careers in the history of exploration.",
+            lat: 19.4769,
+            lon: -155.9230,
+            type: "final"
+          }
+        ]
+      }
+    ];
+
+    const tabWrap = document.getElementById("tabs");
+    const btnStart = document.getElementById("btn-start");
+    const btnNext = document.getElementById("btn-next");
+    const pointInfo = document.getElementById("point-info");
+    const welcome = document.getElementById("welcome");
+
+    const map = L.map("map", {
+      center: [8, -15],
+      zoom: 2,
+      minZoom: 2,
+      worldCopyJump: false,
+      zoomControl: true
+    });
+
+    map.setMaxBounds([[-80, -540], [85, 540]]);
+
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}", {
+      attribution: "Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ",
+      maxZoom: 8,
+      noWrap: false
+    }).addTo(map);
+
+    const layerState = {
+      markers: [],
+      markerLookup: [],
+      completedLines: [],
+      activeLine: null
+    };
+
+    let selectedVoyageIndex = 0;
+    let currentStep = -1;
+    let animating = false;
+    let animationToken = 0;
+
+    function normalizeLon(lon) {
+      let value = lon;
+      while (value > 180) value -= 360;
+      while (value < -180) value += 360;
+      return value;
+    }
+
+    function formatLon(lon) {
+      const normalized = normalizeLon(lon);
+      const hemi = normalized < 0 ? "W" : "E";
+      return `${Math.abs(normalized).toFixed(1)}°${hemi}`;
+    }
+
+    function formatLat(lat) {
+      const hemi = lat < 0 ? "S" : "N";
+      return `${Math.abs(lat).toFixed(1)}°${hemi}`;
+    }
+
+    function buildContinuousRoute(points) {
+      const route = [];
+      let runningLon = points[0].lon;
+
+      points.forEach((point, index) => {
+        if (index === 0) {
+          route.push({ ...point, displayLon: runningLon });
+          return;
+        }
+
+        const candidates = [point.lon - 360, point.lon, point.lon + 360];
+        let bestLon = candidates[0];
+        let bestGap = Math.abs(candidates[0] - runningLon);
+
+        candidates.forEach((candidate) => {
+          const gap = Math.abs(candidate - runningLon);
+          if (gap < bestGap) {
+            bestGap = gap;
+            bestLon = candidate;
+          }
+        });
+
+        runningLon = bestLon;
+        route.push({ ...point, displayLon: runningLon });
+      });
+
+      return route;
+    }
+
+    function buildSegmentWaypoints(start, end) {
+      const midLon = start.displayLon + (end.displayLon - start.displayLon) * 0.5;
+      const arcLift = Math.max(3, Math.min(14, Math.abs(end.displayLon - start.displayLon) / 10));
+      const direction = start.lat < end.lat ? 1 : -1;
+      const midLat = ((start.lat + end.lat) / 2) + arcLift * direction * 0.45;
+
+      return [
+        [start.lat, start.displayLon],
+        [midLat, midLon],
+        [end.lat, end.displayLon]
+      ];
+    }
+
+    function currentVoyage() {
+      return voyages[selectedVoyageIndex];
+    }
+
+    function currentRoute() {
+      return buildContinuousRoute(currentVoyage().points);
+    }
+
+    function updateVoyageSummary() {
+      const voyage = currentVoyage();
+      document.getElementById("voyage-heading").textContent = voyage.title;
+      document.getElementById("voyage-meta").textContent = `${voyage.years} • ${voyage.ship}`;
+      document.getElementById("voyage-blurb").textContent = voyage.intro;
+      document.getElementById("progress-fill").style.background = `linear-gradient(90deg, #8b6433, ${voyage.color})`;
+    }
+
+    function popupHtml(point, index, totalStops) {
+      const label = point.number === "Departure"
+        ? "Departure"
+        : point.number === "Final"
+          ? "Final stop"
+          : `Stop ${index} of ${totalStops}`;
+
+      return `
+        <div class="popup-title">${point.title}</div>
+        <div class="popup-sub">${point.sub}</div>
+        <div style="font-size:11px;line-height:1.5;max-width:250px;color:#dbc794;">${point.desc}</div>
+        <div class="popup-coords">${formatLat(point.lat)} · ${formatLon(point.lon)}</div>
+        <div class="popup-coords">${label}</div>
+      `;
+    }
+
+    function clearMapLayers() {
+      if (layerState.activeLine) {
+        map.removeLayer(layerState.activeLine);
+        layerState.activeLine = null;
+      }
+
+      layerState.completedLines.forEach((line) => map.removeLayer(line));
+      layerState.markers.forEach((marker) => map.removeLayer(marker));
+      layerState.completedLines = [];
+      layerState.markers = [];
+      layerState.markerLookup = [];
+    }
+
+    function resetSidebar(copyOnly = false) {
+      currentStep = -1;
+      animating = false;
+      btnStart.disabled = false;
+      btnNext.disabled = true;
+      btnNext.textContent = "Next ▶";
+      document.getElementById("progress-fill").style.width = "0%";
+      document.getElementById("step-counter").textContent = `Press Start to begin ${currentVoyage().name.toLowerCase()}.`;
+
+      if (!copyOnly) {
+        welcome.style.display = "flex";
+        pointInfo.style.display = "none";
+      }
+    }
+
+    function showPointInfo(point, index, totalPoints) {
+      welcome.style.display = "none";
+      pointInfo.style.display = "block";
+      document.getElementById("point-number").textContent =
+        point.number === "Departure"
+          ? "Departure"
+          : point.number === "Final"
+            ? `Final stop • ${currentVoyage().years}`
+            : `Stop ${index} of ${totalPoints - 2}`;
+      document.getElementById("point-title").textContent = point.title;
+      document.getElementById("point-sub").textContent = point.sub;
+      document.getElementById("point-desc").textContent = point.desc;
+      document.getElementById("info-panel").scrollTop = 0;
+    }
+
+    function updateProgress() {
+      const totalPoints = currentVoyage().points.length;
+      const totalSegments = totalPoints - 1;
+      const pct = currentStep < 0 ? 0 : Math.round((currentStep / (totalPoints - 1)) * 100);
+      document.getElementById("progress-fill").style.width = `${pct}%`;
+
+      if (currentStep < 0) {
+        document.getElementById("step-counter").textContent = `Press Start to begin ${currentVoyage().name.toLowerCase()}.`;
+      } else if (currentStep === 0) {
+        document.getElementById("step-counter").textContent = `Departure revealed • ${totalSegments} legs to sail`;
+      } else if (currentStep === totalPoints - 1) {
+        document.getElementById("step-counter").textContent = `${currentVoyage().name} complete`;
+      } else {
+        document.getElementById("step-counter").textContent = `Leg ${currentStep} of ${totalSegments} complete`;
+      }
+    }
+
+    function setMarkerStyle(marker, point, active = false) {
+      marker.setStyle({
+        radius: point.type === "departure" || point.type === "final" ? 10.5 : 8.5,
+        fillColor: active ? "#fff4d2" : "#4e432d",
+        color: active ? currentVoyage().color : "#292014",
+        weight: active ? 2.4 : 1.8,
+        opacity: active ? 1 : 0.55,
+        fillOpacity: active ? 0.96 : 0.48
+      });
+    }
+
+    function buildMarkers() {
+      const route = currentRoute();
+      const totalStops = route.length - 2;
+
+      route.forEach((point, index) => {
+        const marker = L.circleMarker([point.lat, point.displayLon], {
+          radius: 8.5,
+          fillColor: "#4e432d",
+          color: "#292014",
+          weight: 1.8,
+          opacity: 0.55,
+          fillOpacity: 0.48
+        }).addTo(map);
+
+        marker.bindPopup(popupHtml(point, index, totalStops));
+        layerState.markers.push(marker);
+        layerState.markerLookup.push({ point, marker });
+      });
+    }
+
+    function flyToPoint(point, zoom = 3) {
+      map.flyTo([point.lat, point.displayLon], zoom, {
+        duration: 1.15,
+        easeLinearity: 0.25
+      });
+    }
+
+    function interpolatePoints(pts, targetFrames = 72) {
+      const distances = [0];
+      for (let i = 1; i < pts.length; i++) {
+        const dy = pts[i][0] - pts[i - 1][0];
+        const dx = pts[i][1] - pts[i - 1][1];
+        distances.push(distances[i - 1] + Math.sqrt(dx * dx + dy * dy));
+      }
+
+      const total = distances[distances.length - 1];
+      const interpolated = [pts[0]];
+
+      for (let step = 1; step < targetFrames - 1; step++) {
+        const targetDistance = (step / (targetFrames - 1)) * total;
+        let cursor = 1;
+        while (cursor < distances.length - 1 && distances[cursor] < targetDistance) cursor++;
+        const span = distances[cursor] - distances[cursor - 1] || 1;
+        const t = (targetDistance - distances[cursor - 1]) / span;
+        interpolated.push([
+          pts[cursor - 1][0] + ((pts[cursor][0] - pts[cursor - 1][0]) * t),
+          pts[cursor - 1][1] + ((pts[cursor][1] - pts[cursor - 1][1]) * t)
+        ]);
+      }
+
+      interpolated.push(pts[pts.length - 1]);
+      return interpolated;
+    }
+
+    function animateSegment(segmentPoints, onComplete) {
+      const token = ++animationToken;
+      const frames = interpolatePoints(segmentPoints, 76);
+
+      if (layerState.activeLine) {
+        map.removeLayer(layerState.activeLine);
+      }
+
+      layerState.activeLine = L.polyline([frames[0]], {
+        color: currentVoyage().color,
+        weight: 4,
+        opacity: 0.95,
+        lineCap: "round",
+        lineJoin: "round"
+      }).addTo(map);
+
+      let frameIndex = 1;
+      const timer = setInterval(() => {
+        if (token !== animationToken) {
+          clearInterval(timer);
+          return;
+        }
+
+        const frame = frames[frameIndex];
+        layerState.activeLine.addLatLng(frame);
+
+        if (frameIndex < frames.length - 1) {
+          map.panTo(frame, { animate: true, duration: 0.08 });
+        }
+
+        frameIndex += 1;
+
+        if (frameIndex >= frames.length) {
+          clearInterval(timer);
+          layerState.completedLines.push(layerState.activeLine);
+          layerState.activeLine = null;
+          onComplete();
+        }
+      }, 18);
+    }
+
+    function highlightThrough(step) {
+      layerState.markerLookup.forEach(({ point, marker }, index) => {
+        setMarkerStyle(marker, point, index <= step);
+      });
+    }
+
+    function advance() {
+      if (animating) return;
+
+      const route = currentRoute();
+
+      if (currentStep === -1) {
+        currentStep = 0;
+        highlightThrough(currentStep);
+        showPointInfo(route[currentStep], currentStep, route.length);
+        updateProgress();
+        flyToPoint(route[currentStep], 4);
+        btnStart.disabled = true;
+        btnNext.disabled = false;
+        return;
+      }
+
+      const segmentIndex = currentStep;
+      if (segmentIndex >= route.length - 1) return;
+
+      animating = true;
+      btnNext.disabled = true;
+      btnNext.textContent = "Sailing...";
+
+      animateSegment(buildSegmentWaypoints(route[segmentIndex], route[segmentIndex + 1]), () => {
+        currentStep += 1;
+        highlightThrough(currentStep);
+        showPointInfo(route[currentStep], currentStep, route.length);
+        updateProgress();
+        flyToPoint(route[currentStep], currentStep === route.length - 1 ? 4 : 3.6);
+
+        animating = false;
+        if (currentStep >= route.length - 1) {
+          btnNext.textContent = "Complete";
+          btnNext.disabled = true;
+        } else {
+          btnNext.textContent = "Next ▶";
+          btnNext.disabled = false;
+        }
+      });
+    }
+
+    function drawLegend() {
+      const legend = L.control({ position: "bottomright" });
+      legend.onAdd = function() {
+        const div = L.DomUtil.create("div", "legend");
+        div.innerHTML = `
+          <h4>Legend</h4>
+          <div class="legend-item"><div class="legend-swatch" style="background: var(--voyage-1);"></div><span>Voyage 1 route</span></div>
+          <div class="legend-item"><div class="legend-swatch" style="background: var(--voyage-2);"></div><span>Voyage 2 route</span></div>
+          <div class="legend-item"><div class="legend-swatch" style="background: var(--voyage-3);"></div><span>Voyage 3 route</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#4e432d;"></div><span>Unreached stop</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background: var(--active);"></div><span>Reached stop</span></div>
+        `;
+        return div;
+      };
+      legend.addTo(map);
+    }
+
+    function renderTabs() {
+      tabWrap.innerHTML = "";
+      voyages.forEach((voyage, index) => {
+        const button = document.createElement("button");
+        button.className = `tab-btn${index === selectedVoyageIndex ? " active" : ""}`;
+        button.textContent = voyage.name;
+        button.addEventListener("click", () => switchVoyage(index));
+        tabWrap.appendChild(button);
+      });
+    }
+
+    function switchVoyage(index) {
+      if (index === selectedVoyageIndex && layerState.markers.length) return;
+
+      selectedVoyageIndex = index;
+      animationToken += 1;
+      clearMapLayers();
+      updateVoyageSummary();
+      renderTabs();
+      buildMarkers();
+      resetSidebar();
+
+      const { camera } = currentVoyage();
+      map.setView([camera.lat, camera.lon], camera.zoom, { animate: false });
+    }
+
+    btnStart.addEventListener("click", advance);
+    btnNext.addEventListener("click", advance);
+
+    drawLegend();
+    switchVoyage(0);
+  </script>
+</body>
+</html>
