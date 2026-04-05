@@ -637,7 +637,7 @@
         years: "1776-1779",
         ship: "From Britain through the southern oceans to Hawaii and the Northwest Coast",
         color: "#d86b4c",
-        intro: "The third voyage aimed to approach the Northwest Passage from the Pacific side. It led Cook to the Hawaiian Islands, the northwest coast of North America, and finally back to Hawaii, where he was killed at Kealakekua Bay.",
+        intro: "The third voyage aimed to approach the Northwest Passage from the Pacific side. It led Cook by way of New Zealand and Tahiti to the Hawaiian Islands, onward to the northwest coast of North America, and finally back to Hawaii, where he was killed at Kealakekua Bay. Captain Charles Clerke assumed command of the voyage but died of tuberculosis near the Kamchatka Peninsula in August 1779. Under the command of John Gore, the expedition visited Russia and China before eventually returning to England on October 4, 1780.",
         camera: { lat: 14, lon: -35, zoom: 2.6 },
         points: [
           {
@@ -669,6 +669,15 @@
           },
           {
             number: "3",
+            title: "Queen Charlotte Sound",
+            sub: "February 1777 · New Zealand",
+            desc: "Cook called at Queen Charlotte Sound before turning deeper into the Pacific. The stop gave the expedition a final New Zealand anchorage on the way toward the island worlds that would lead, in time, to Hawaii.",
+            lat: -41.0889,
+            lon: 174.2760,
+            type: "landing"
+          },
+          {
+            number: "4",
             title: "Tahiti",
             sub: "August-September 1777 · Society Islands",
             desc: "The voyage paused in Tahiti while Omai's return reshaped local and imperial expectations alike. Tahiti also remained one of Cook's most important Pacific crossroads for replenishment and diplomacy.",
@@ -677,7 +686,7 @@
             type: "landing"
           },
           {
-            number: "4",
+            number: "5",
             title: "Hawaii",
             sub: "January 1778 · Kauai",
             desc: "Cook became the first European known to make contact with the Hawaiian Islands. He quickly recognized that Hawaiian language and culture were deeply connected to the wider Polynesian world.",
@@ -686,7 +695,7 @@
             type: "landing"
           },
           {
-            number: "5",
+            number: "6",
             title: "Nootka Sound",
             sub: "March-April 1778 · Vancouver Island",
             desc: "At Nootka Sound Cook repaired his ships and traded with Nuu-chah-nulth communities. The exchange of sea otter pelts here helped foreshadow the maritime fur trade that followed in the region.",
@@ -695,7 +704,7 @@
             type: "landing"
           },
           {
-            number: "6",
+            number: "7",
             title: "Bering Strait",
             sub: "August 1778 · Arctic approach",
             desc: "Cook drove north through the Bering Strait but met impenetrable ice. The long-sought Northwest Passage remained closed, and the expedition had to turn back south before winter locked the coast.",
@@ -749,11 +758,12 @@
       },
       "voyage-3": {
         historicalMiles: 37000,
-        elapsedYears: [0, 0.25, 0.5, 1.25, 1.5, 1.75, 2.0, 2.5],
+        elapsedYears: [0, 0.25, 0.5, 0.9, 1.25, 1.5, 1.75, 2.0, 2.5],
         segments: [
           [[35.0, -15.0], [5.0, -20.0], [-20.0, -5.0], [-34.0, 18.0]],
           [[-40.0, 35.0], [-45.0, 50.0], [-49.0, 63.0]],
-          [[-46.0, 90.0], [-43.0, 120.0], [-44.0, 150.0], [-43.0, 170.0], [-35.0, -170.0], [-25.0, -160.0], [-18.0, -152.0]],
+          [[-47.0, 90.0], [-45.0, 120.0], [-43.0, 150.0], [-42.0, 168.0], [-41.3, 174.1]],
+          [[-34.0, 178.0], [-28.0, -175.0], [-23.0, -167.0], [-19.0, -158.0], [-18.0, -152.0]],
           [[-8.0, -155.0], [8.0, -157.0], [18.0, -158.0]],
           [[30.0, -160.0], [40.0, -150.0], [48.0, -135.0]],
           [[56.0, -150.0], [61.0, -162.0], [65.0, -168.0]],
@@ -770,18 +780,51 @@
           dashArray: "7 10",
           opacity: 0.95,
           weight: 3.5,
+          revealAtFinal: true,
           coords: [
             [19.4769, -155.9230],
-            [28.0, -160.0],
-            [40.0, -170.0],
-            [52.0, 178.0],
-            [59.0, 171.0],
-            [64.0, -169.0],
-            [70.0, -168.0],
-            [64.0, -170.0],
-            [58.0, 178.0],
-            [53.0, 170.0],
+            [21.9, -159.5],
+            [22.1, -160.3],
+            [31.0, -166.0],
+            [43.0, -172.0],
+            [55.0, -176.0],
+            [63.0, 178.5],
+            [67.5, -170.0],
+            [68.0, -168.0],
+            [66.0, -171.5],
+            [60.0, 178.0],
+            [54.7, 163.2],
             [52.9776, 158.6483]
+          ],
+          stops: [
+            {
+              title: "Kauai and Niihau",
+              sub: "Spring 1779 · Hawaiian Islands",
+              desc: "The crew visited Kauai and Niihau to trade, then departed the islands and proceeded north toward Alaska, pursuing the original mission to find a Northwest Passage.",
+              lat: 21.95,
+              lon: -159.55
+            },
+            {
+              title: "Second Push into the Bering Sea",
+              sub: "Summer 1779 · Arctic return",
+              desc: "Resolution and Discovery resumed the northern search and pushed back into the Bering Sea, retracing Cook's unfinished attempt to force a passage through the ice.",
+              lat: 67.8,
+              lon: -168.5
+            },
+            {
+              title: "Clerke Dies Near Kamchatka",
+              sub: "22 August 1779 · Off the Kamchatka Peninsula",
+              desc: "Captain Charles Clerke assumed command of the voyage but died of tuberculosis near the Kamchatka Peninsula in August 1779.",
+              lat: 54.7,
+              lon: 163.2
+            },
+            {
+              title: "Petropavlovsk, Russia",
+              sub: "Autumn 1779 · Kamchatka",
+              desc: "After Clerke's death, the battered expedition touched Russia for provisions and news before John Gore carried the voyage onward across the North Pacific.",
+              lat: 53.017,
+              lon: 158.6483
+            }
           ]
         },
         {
@@ -790,12 +833,12 @@
           dashArray: "2 10",
           opacity: 0.95,
           weight: 3.5,
+          revealAtFinal: true,
           coords: [
             [52.9776, 158.6483],
-            [48.0, 150.0],
-            [42.0, 142.0],
-            [35.0, 136.0],
-            [28.0, 131.0],
+            [44.0, 146.0],
+            [36.0, 140.0],
+            [31.2, 121.5],
             [22.2, 113.5],
             [6.0, 105.0],
             [-5.8, 104.8],
@@ -811,6 +854,22 @@
             [15.0, -15.0],
             [40.0, -10.0],
             [51.5, 1.0]
+          ],
+          stops: [
+            {
+              title: "China",
+              sub: "1779-1780 · Macao and Canton roads",
+              desc: "Under the command of John Gore, the expedition visited China for repairs, trade, and a chance to turn hard-won Pacific discoveries into saleable sea-otter cargo.",
+              lat: 22.2,
+              lon: 113.5
+            },
+            {
+              title: "Return to England",
+              sub: "4 October 1780 · Thames estuary",
+              desc: "Under the command of John Gore, the expedition visited Russia and China before eventually returning to England on October 4, 1780.",
+              lat: 51.5,
+              lon: 1.0
+            }
           ]
         }
       ]
@@ -1040,6 +1099,28 @@
       `;
     }
 
+    function shouldShowOverlay(overlay) {
+      if (overlay.revealAtFinal) {
+        return currentStep >= currentComputed().route.length - 1;
+      }
+
+      return true;
+    }
+
+    function setOverlayVisibility() {
+      layerState.overlays.forEach((entry) => {
+        const visible = shouldShowOverlay(entry.overlay);
+        entry.line.setStyle({ opacity: visible ? entry.overlay.opacity : 0 });
+
+        entry.markers.forEach((marker) => {
+          marker.setStyle({
+            opacity: visible ? 1 : 0,
+            fillOpacity: visible ? 0.9 : 0
+          });
+        });
+      });
+    }
+
     function clearMapLayers() {
       if (layerState.activeLine) {
         map.removeLayer(layerState.activeLine);
@@ -1047,7 +1128,10 @@
       }
 
       layerState.completedLines.forEach(({ line }) => map.removeLayer(line));
-      layerState.overlays.forEach((line) => map.removeLayer(line));
+      layerState.overlays.forEach(({ line, markers }) => {
+        map.removeLayer(line);
+        markers.forEach((marker) => map.removeLayer(marker));
+      });
       layerState.markers.forEach((marker) => map.removeLayer(marker));
       layerState.completedLines = [];
       layerState.overlays = [];
@@ -1116,6 +1200,7 @@
         document.getElementById("step-counter").textContent = `Leg ${currentStep} of ${totalSegments} complete`;
       }
 
+      setOverlayVisibility();
       setControlState();
     }
 
@@ -1157,14 +1242,37 @@
         const line = L.polyline(latLngs, {
           color: overlay.color,
           weight: overlay.weight,
-          opacity: overlay.opacity,
+          opacity: 0,
           dashArray: overlay.dashArray,
           lineCap: "round",
           lineJoin: "round"
         }).addTo(map);
 
-        layerState.overlays.push(line);
+        const markers = (overlay.stops || []).map((stop) => {
+          const [latLng] = buildContinuousPolyline([[stop.lat, stop.lon]]);
+          const marker = L.circleMarker(latLng, {
+            radius: 7.5,
+            fillColor: "#fff4d2",
+            color: overlay.color,
+            weight: 2.2,
+            opacity: 0,
+            fillOpacity: 0
+          }).addTo(map);
+
+          marker.bindPopup(`
+            <div class="popup-title">${stop.title}</div>
+            <div class="popup-sub">${stop.sub}</div>
+            <div style="font-size:11px;line-height:1.5;max-width:250px;color:#dbc794;">${stop.desc}</div>
+            <div class="popup-coords">${formatLat(stop.lat)} · ${formatLon(stop.lon)}</div>
+          `);
+
+          return marker;
+        });
+
+        layerState.overlays.push({ overlay, line, markers });
       });
+
+      setOverlayVisibility();
     }
 
     function segmentMetrics(points) {
